@@ -7,58 +7,30 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
 /**
  * Главный класс приложения. Запускает Telegram-бота.
  */
+
 public class Main {
-
     /**
-     * Точка входа. Инициализирует и регистрирует бота в Telegram API.
+     * Точка входа. Читает конфиг и регистрирует бота в Telegram API.
      */
-    public static void main(String[] args) {
-        System.out.println("Starting EchoBot");
+    public static void main(String[] args) throws Exception {
+        Properties config = new Properties();
+        try (InputStream input = Main.class.getClassLoader().getResourceAsStream("config.properties")) {
+            config.load(input);
+        }
 
-        Properties config = loadConfig();
         String botUsername = config.getProperty("bot.username");
         String botToken = config.getProperty("bot.token");
 
-        try {
-            TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(new EchoBot(botUsername, botToken));
+        TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
+        botsApi.registerBot(new EchoBot(botUsername, botToken));
 
-            System.out.println("Bot successfully started!");
-
-        } catch (TelegramApiException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Загружает конфигурацию из resources/config.properties.
-     */
-    private static Properties loadConfig() {
-        Properties props = new Properties();
-        try (InputStream input = Main.class.getClassLoader().getResourceAsStream("config.properties")) {
-            if (input == null) {
-                throw new RuntimeException(
-                        "Файл config.properties не найден в resources! " +
-                                "Скопируйте config.properties.example в config.properties и заполните его."
-                );
-            }
-            props.load(input);
-        } catch (IOException e) {
-            throw new RuntimeException("Ошибка чтения config.properties", e);
-        }
-
-        if (props.getProperty("bot.token") == null || props.getProperty("bot.username") == null) {
-            throw new RuntimeException("В config.properties должны быть заданы bot.token и bot.username");
-        }
-
-        return props;
+        System.out.println("Bot successfully started!");
     }
 
     /**
