@@ -7,6 +7,10 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 /**
  * Главный класс приложения. Запускает Telegram-бота.
  */
@@ -15,13 +19,16 @@ public class Main {
     /**
      * Точка входа. Инициализирует и регистрирует бота в Telegram API.
      */
-
     public static void main(String[] args) {
         System.out.println("Starting EchoBot");
 
+        Properties config = loadConfig();
+        String botUsername = config.getProperty("bot.username");
+        String botToken = config.getProperty("bot.token");
+
         try {
             TelegramBotsApi botsApi = new TelegramBotsApi(DefaultBotSession.class);
-            botsApi.registerBot(new EchoBot());
+            botsApi.registerBot(new EchoBot(botUsername, botToken));
 
             System.out.println("Bot successfully started!");
 
@@ -31,24 +38,52 @@ public class Main {
     }
 
     /**
+     * Загружает конфигурацию из resources/config.properties.
+     */
+    private static Properties loadConfig() {
+        Properties props = new Properties();
+        try (InputStream input = Main.class.getClassLoader().getResourceAsStream("config.properties")) {
+            if (input == null) {
+                throw new RuntimeException(
+                        "Файл config.properties не найден в resources! " +
+                                "Скопируйте config.properties.example в config.properties и заполните его."
+                );
+            }
+            props.load(input);
+        } catch (IOException e) {
+            throw new RuntimeException("Ошибка чтения config.properties", e);
+        }
+
+        if (props.getProperty("bot.token") == null || props.getProperty("bot.username") == null) {
+            throw new RuntimeException("В config.properties должны быть заданы bot.token и bot.username");
+        }
+
+        return props;
+    }
+
+    /**
      * Эхо-бот. Отправляет в чат текст полученного сообщения.
      */
-
     public static class EchoBot extends TelegramLongPollingBot {
 
-        private static final String BOT_USERNAME = "Echo_ilya_252201_bot";
-        private static final String BOT_TOKEN = "8325504457:AAHYBhaIpnaRAl_M0WVyQuotC7x4_PUBFrY";
+        private final String botUsername;
+        private final String botToken;
 
-        /**  Имя пользователя бота. */
+        public EchoBot(String botUsername, String botToken) {
+            this.botUsername = botUsername;
+            this.botToken = botToken;
+        }
+
+        /** Имя пользователя бота. */
         @Override
         public String getBotUsername() {
-            return BOT_USERNAME;
+            return botUsername;
         }
 
         /** Секретный токен авторизации бота. */
         @Override
         public String getBotToken() {
-            return BOT_TOKEN;
+            return botToken;
         }
 
         /**

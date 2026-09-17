@@ -22,9 +22,10 @@ dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
 
-# Токены и секреты (НИКОГДА не коммитьте!)
+# Токены и секреты
 *.env
 *.properties
+src/main/resources/config.properties
 !src/main/resources/application.properties.example
 
 # Логи
